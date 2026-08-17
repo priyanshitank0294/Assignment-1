@@ -2,6 +2,11 @@
 
 const mongoose=require('mongoose');
 const productSchema= new mongoose.Schema({
+    owner:{
+type:mongoose.Schema.Types.ObjectId,
+ref:"Auth",
+required:true
+    },
     name:{
         type:String,
         required:true,

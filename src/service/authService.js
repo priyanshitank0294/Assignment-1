@@ -1,9 +1,11 @@
 const bcrypt=require("bcrypt");
 const jwt=require("jsonwebtoken");
-const secretKey=process.env.secret_key;
+const accessKey=process.env.access_key;
+const refreshKey=process.env.refresh_key;
 const RegisterModel=require("../model/registerModel");
+const RefreshModel=require("../../src/model/refreshModel");
 const authService= async (data)=>{
-  const{name, email,password} = data ;
+  const{name, email,password,role} = data ;
     const existUser = await RegisterModel.findOne({ email });
       if (existUser) {
         return res.status(400).send("this email is already registered");
@@ -32,9 +34,32 @@ const loginService=async(data)=>{
         .send("OOPS! Invalid credentials!!");
     }
     //generate a token and send it to the user
-    const token=jwt.sign({userID:userExist.__id},secretKey,{expiresIn:"1h"});
+    // const token=jwt.sign({userID:userExist._id},secretKey,{expiresIn:"1h"});
+
+
+    //access token
+const accessToken=jwt.sign({
+  id:userExist._id
+},accessKey,{
+  expiresIn:"1m"
+});
+
+//refresh token
+const refreshToken=jwt.sign({
+  id:userExist._id
+},refreshKey,{
+  expiresIn:"7d"
+});
+await RefreshModel.create({
+  refreshToken:refreshToken,
+  userID:userExist._id,
+  expiredAt:new Date(Date.now()+ 7 * 24 * 60 * 1000)
+})
+
+
     return{
-      token,user:userExist,
+      //token
+      accessToken,refreshToken ,user:userExist,
     };
 }
 module.exports={authService,loginService};

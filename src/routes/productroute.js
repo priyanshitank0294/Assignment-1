@@ -1,6 +1,8 @@
 const express = require("express");
 const validationMiddleware = require("../middleware/validationMiddleware");
 const authMiddleware = require("../../authValidation");
+const authorization=require("../middleware/authorisation");
+const {loadProductData,abacMiddleware}=require("../middleware/abacMiddleware");
 const {
   createProductSchema
   
@@ -10,65 +12,13 @@ const { default: mongoose } = require("mongoose");
 const productRouter = express.Router();
 const productController = require("../controller/productController");
 
-productRouter.post("/createProduct" ,authMiddleware, validationMiddleware(createProductSchema), productController.createProduct);
+productRouter.post("/createProduct" ,authMiddleware,authorization("admin","seller"),abacMiddleware("product:create"), validationMiddleware(createProductSchema), productController.createProduct);
 
-productRouter.get("/getProduct" , authMiddleware , async (req,res)=>{
-    try{
-        const {page, limit , sort ="ASC"} = req.query;
-    let allProduct =  await ProductModel.find({})
-      .skip((page-1)*limit)
-      .select("-description")
-      .limit(limit)
-      .sort(sort);
-      
-      res.json(allProduct);
-    }
-    catch(err){
-        console.log(error);
-    }
-});
+productRouter.get("/getProduct" , authMiddleware , abacMiddleware("product:read"),productController.getProduct);
 
-productRouter.get("/getSingleProduct/:id" , authMiddleware , async(req,res)=>{
-try{
- const id = req.params.id;
- if(!mongoose.isValidObjectId(id)){
-  return  res.status(400).send("invalid id..");
- }
-  let singleProduct = await ProductModel.findById(id);
+productRouter.get("/getSingleProduct/:id" , authMiddleware ,abacMiddleware("product:read") ,productController.getProductById);
 
-  if(!singleProduct){
-   return res.status(404).send("product don't exist");
-  }
-
-  res.json(singleProduct);
-}
-catch(err){
-    console.log(err);
-}
-});
-
-productRouter.patch("/updateSingleProduct/:id" , authMiddleware , async (req,res)=>{
-    try{
-     const id = req.params.id;
-     if(!mongoose.isValidObjectId(id)){
-       return res.status(400).send("invalid Id");
-    }
-
-    const productExist = await ProductModel.findById(id);
-
-    if(!productExist){
-     return   res.status(404).send("Product not found.");
-    }
-    await ProductModel.findByIdAndUpdate(id , req.body , {
-     returnDocument : "after",
-     runValidators:true,
-    });
-    res.status(200).send("Product updated successfully");
-    }
-    catch(err){
-        console.log(error);
-    }
-});
+productRouter.patch("/updateSingleProduct/:id" , authMiddleware ,loadProductData, abacMiddleware("product:update"),productController.updateProduct);
 
 productRouter.delete("/deleteProduct/:id" , authMiddleware , async (req,res)=>{
     try{
@@ -86,7 +36,7 @@ productRouter.delete("/deleteProduct/:id" , authMiddleware , async (req,res)=>{
 
     }
     catch(err){
-        console.log(error);
+        console.log(err);
     }
 })
 module.exports = productRouter;

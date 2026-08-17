@@ -19,6 +19,8 @@ const authMiddleware=require("./authValidation");
 const validationMiddleware= require("./src/middleware/validationMiddleware");
 // const {RegisterSchema,LoginSchema}=require("./validationSchema/authValidationSchema");
 const createProductSchema=require("./src/validationSchema/productValidationSchema");
+const addressRouter=require("./src/routes/addressroute");
+app.use("/address",addressRouter);
 
 
  

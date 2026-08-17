@@ -1,8 +1,8 @@
 const authService=require("../service/authService");
 const registerUser= async (req, res) => {
     try {
-      const { name, email, password } = req.body;
-      await authService.authService({name,email,password});
+      const { name, email, password,role } = req.body;
+      await authService.authService({name,email,password,role});
       res.status(201).send(`${name}   You are registered successfully`);
     } catch (err) {
       console.log(err);
@@ -15,9 +15,10 @@ const registerUser= async (req, res) => {
     
 
     const { email, password } = req.body;
-    const {token,user}=await authService.loginService({email,password});
+    const {accessToken,refreshToken,user}=await authService.loginService({email,password});
 
-    res.cookie("givenToken",token,{httpOnly:true});
+    res.cookie("givenToken",accessToken,{httpOnly:true});
+    res.cookie("refreshtoken",refreshToken,{httpOnly:true})
 
     res.status(200).send(`Welcome ${user.name}!! You are logged in successfully!`);
     

@@ -15,6 +15,14 @@ const AuthSchema = new mongoose.Schema({
     lowercase: true,
     trim: true,
   },
+  role:{
+    type:String,
+    enum:["user","admin","seller"],
+    required:true,
+    trim:true,
+    maxLength:10,
+   default:"seller"
+  },
   password: {
     type: String,
     required: true,
@@ -24,6 +32,19 @@ const AuthSchema = new mongoose.Schema({
     trim: true,
   },
 },{timestamps:true});
+
+AuthSchema.virtual("addresses",{
+  ref:"Address",
+  localField:"_id",
+  foreignField: "userId",
+})
+AuthSchema.set("toJSON",{
+  virtuals:true
+});
+AuthSchema.set("toObject",{
+  virtuals:true
+})
+
 
 const RegisterModel = new mongoose.model("Auth", AuthSchema);
 
