@@ -1,5 +1,12 @@
 const mongoose = require("mongoose");
-
+const userField =new mongoose.Schema({
+  url:{
+    type:String
+  },
+  public_id:{
+    type:String
+  }
+})
 const AuthSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -31,6 +38,12 @@ const AuthSchema = new mongoose.Schema({
     maxLength: 128,
     trim: true,
   },
+  userLogo:{
+    type:userField,
+    
+  }
+
+
 },{timestamps:true});
 
 AuthSchema.virtual("addresses",{

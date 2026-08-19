@@ -4,20 +4,31 @@ const accessKey=process.env.access_key;
 const refreshKey=process.env.refresh_key;
 const RegisterModel=require("../model/registerModel");
 const RefreshModel=require("../../src/model/refreshModel");
-const authService= async (data)=>{
-  const{name, email,password,role} = data ;
+const {uploadBuffer , updateImage , deleteImage}= require("../utils/uploadBuffer");
+const authService= async (req)=>{
+  const{name, email,password,role} = req.body ;
     const existUser = await RegisterModel.findOne({ email });
       if (existUser) {
-        return res.status(400).send("this email is already registered");
+       return null;
       }
+      const result = await uploadBuffer(
+      req.file.buffer,
+      "My-Image"
+    );
       const hashPassword = await bcrypt.hash(password, 10);
       const newuser = new RegisterModel({
         name,
         email,
         password: hashPassword,
+        role,
+        userLogo:{
+          url:result.secure_url,
+          public_id:result.public_id
+        }
       });
 
       await newuser.save();
+      return newuser;
 }
 const loginService=async(data)=>{
   const {email,password}=data;
@@ -62,4 +73,46 @@ await RefreshModel.create({
       accessToken,refreshToken ,user:userExist,
     };
 }
-module.exports={authService,loginService};
+const updateImageService = async (req)=>{
+  const  user = req.user
+  if(!user){
+    return null;
+  }
+  const newResult = await updateImage(
+    req.file.buffer ,
+    user.userLogo.public_Id,
+    "My-Image",
+  )
+  user.userLogo= { 
+   url: newResult.secure_url,
+  public_Id:newResult.public_id,
+  }
+  await user.save();
+  return {user, newResult};
+}
+
+const deleteImageService = async (req)=>{
+ try{const user = req.user
+ if(!user){
+  return null;
+ }
+   if (!user.userLogo) {
+      throw new Error("User does not have an image");
+    }
+
+ const oldPublic_id = user.userLogo.public_Id;
+
+  if (!oldPublic_id) {
+    throw new Error("User does not have an image");
+  } 
+ await deleteImage(oldPublic_id);
+  user.userLogo = null;
+ await user.save();
+
+ return user;}
+ catch(err){
+  console.log(err);
+ }
+}
+
+module.exports={authService,loginService,updateImageService,deleteImageService};

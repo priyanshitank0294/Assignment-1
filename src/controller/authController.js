@@ -1,9 +1,13 @@
 const authService=require("../service/authService");
 const registerUser= async (req, res) => {
     try {
-      const { name, email, password,role } = req.body;
-      await authService.authService({name,email,password,role});
-      res.status(201).send(`${name}   You are registered successfully`);
+
+     
+     const user= await authService.authService(req);
+     if(!user){
+      return res.status(400).send("Email already exist");
+     }
+      res.status(201).send(`  You are registered successfully`);
     } catch (err) {
       console.log(err);
     }
@@ -38,4 +42,57 @@ const logoutUser=async  (req,res)=>{
     console.log(err);
   }
 }
-  module.exports={registerUser,loginUser,logoutUser};
+
+const updateImage = async (req,res)=>{
+ try {
+    if(!req.file){
+      res.status(404).send("image don't exist!");
+    };
+
+    const {user,newResult} = await  authService.updateImageService(req);
+    if(!user){
+    return  res.send("user not found");
+    }
+    return res.status(200).send({
+      message :" image updated successfully" ,
+      image:{
+        url: newResult.secure_url,
+        public_Id: newResult.public_id,
+      }
+    });
+
+    }
+    catch(err){
+      console.log(err);
+      return res.status(500).send({
+        message: "Image upload failed",
+        error: err.message
+      });
+    }
+    
+  }
+
+  const deleteImage = async (req,res)=>{
+    try{
+
+
+const user = await authService.deleteImageService(req);
+if(!user){
+ return  res.send("user not found");
+
+}
+ return res.status(200).send({
+      message :" image deleted successfully" ,
+      
+    });
+
+    }
+    catch(err){
+      console.log(err);
+      return res.status(500).send({
+        message:"Image not deleted",
+        error:err.message
+      });
+    }
+  }
+  module.exports={registerUser,loginUser,logoutUser,updateImage,deleteImage};

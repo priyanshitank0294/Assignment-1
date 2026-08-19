@@ -8,6 +8,24 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const refreshKey=process.env.refresh_key;
 const accessKey=process.env.access_key;
+const multer=require("multer");
+const path =require('path');
+const allowed=["image/jpeg","image/png","image/webp"];
+const fileFilter=(req,file,cb)=>{
+  if(allowed.includes(file.mimetype)){
+    cb(null,true)
+  }
+  else{
+    cb(new Error("Only jpg ,png,webp allowed "),false);
+  }
+}
+
+const upload=multer({storage:multer.memoryStorage(),fileFilter,limits:{
+  fileSize:2*1024*1024,  //2 MB
+  files:1,
+  fields:6
+}});
+
 const {
   RegisterSchema,
   LoginSchema,
@@ -15,7 +33,7 @@ const {
 const authController=require("../controller/authController")
 const secretKey=process.env.secret_key;
 
-authRouter.post("/register" ,validationMiddleware(RegisterSchema), authController.registerUser
+authRouter.post("/register" ,upload.single("userPhoto"),validationMiddleware(RegisterSchema), authController.registerUser
 );
 
 authRouter.post("/login" ,validationMiddleware(LoginSchema), 
